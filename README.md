@@ -1,6 +1,4 @@
 # -AI-Powered-YouTube-Title-Description-Generator
-An n8n-based AI agent that automatically generates YouTube titles and descriptions using OpenAI based on video transcript or input.
-# 🎥 AI-Powered YouTube Title & Description Generator (n8n + Gemini)
 
 An automated YouTube content generator built with [n8n] that processes video links from Google Sheets, summarizes content using RapidAPI, generates SEO-optimized descriptions with Gemini, and crafts viral titles using an AI agent. Final results are emailed and logged back into Google Sheets to streamline content creation.
 
