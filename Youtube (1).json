@@ -1,0 +1,605 @@
+{
+  "name": "Youtube",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -45
+      ],
+      "id": "9cce7a82-7deb-4dd3-a6de-bd16b1e4071b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1je0BRFmm3dmGcWK6JZww4DEOsktb0_41aHOF9edbUGo",
+          "mode": "list",
+          "cachedResultName": "Youtube",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1je0BRFmm3dmGcWK6JZww4DEOsktb0_41aHOF9edbUGo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1je0BRFmm3dmGcWK6JZww4DEOsktb0_41aHOF9edbUGo/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Next"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        220,
+        -45
+      ],
+      "id": "f71fae52-6440-454b-a5fc-89686ac060e1",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "z5k9yZEXpsMCQLh8",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        440,
+        -45
+      ],
+      "id": "f4ad958f-0a08-4972-b65e-3d9b37b35c8f",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawUrl = $json['Video link']?.trim() ?? '';\nlet videoId = '';\n\ntry {\n\tconst url = new URL(rawUrl);\n\tif (url.hostname === 'youtu.be') {\n\t\tvideoId = url.pathname.slice(1);\n\t} else {\n\t\tvideoId = url.searchParams.get('v') || '';\n\t}\n} catch (err) {\n\tvideoId = rawUrl.match(/v=([a-zA-Z0-9_-]{11})/)?.[1] ?? '';\n}\n\nconst videoLink = videoId ? `https://www.youtube.com/watch?v=${videoId}` : '';\n\nreturn [\n\t{\n\t\tjson: {\n\t\t\tvideoId,\n\t\t\tvideoLink\n\t\t}\n\t}\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -170
+      ],
+      "id": "f1bbfd9a-b23c-45cb-a622-ddac01f823d2",
+      "name": "Code- This will seprate Video link and id"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        50
+      ],
+      "id": "4157de51-7f2a-470b-bdf3-bcebb069a168",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Alovau9ASpyun7L0",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2420,
+        50
+      ],
+      "id": "9ced2d2a-b37f-4be0-b3ec-8179e7c2baa1",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Alovau9ASpyun7L0",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1je0BRFmm3dmGcWK6JZww4DEOsktb0_41aHOF9edbUGo",
+          "mode": "list",
+          "cachedResultName": "Youtube",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1je0BRFmm3dmGcWK6JZww4DEOsktb0_41aHOF9edbUGo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1je0BRFmm3dmGcWK6JZww4DEOsktb0_41aHOF9edbUGo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Done",
+            "Title ideas": "={{ $json.cleaned_text }}",
+            "Description": "={{ $('filter description').item.json.cleaned_text }}",
+            " Video link": "={{ $('Extract link').item.json['Video link'] }}"
+          },
+          "matchingColumns": [
+            " Video link"
+          ],
+          "schema": [
+            {
+              "id": " Video link",
+              "displayName": " Video link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title ideas",
+              "displayName": "Title ideas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2920,
+        -45
+      ],
+      "id": "8f573311-096d-40de-b198-b1f3005d8b49",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "z5k9yZEXpsMCQLh8",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.text || $json.output || ''; // Use the correct key based on your workflow\n\nconst cleaned = raw\n  .replace(/\\\\n/g, ' ')   // Remove literal \"\\n\"\n  .replace(/\\n/g, ' ')    // Remove actual newlines (if any)\n  .replace(/\\s+/g, ' ')   // Collapse multiple spaces\n  .trim();\n\nreturn {\n  cleaned_text: cleaned\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2120,
+        -170
+      ],
+      "id": "60dfa864-189f-437a-b56e-9f9ece759ad1",
+      "name": "filter description"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.text || $json.output || ''; // Use the correct key based on your workflow\n\nconst cleaned = raw\n  .replace(/\\\\n/g, ' ')   // Remove literal \"\\n\"\n  .replace(/\\n/g, ' ')    // Remove actual newlines (if any)\n  .replace(/\\s+/g, ' ')   // Collapse multiple spaces\n  .trim();\n\nreturn {\n  cleaned_text: cleaned\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        -160
+      ],
+      "id": "8b3a03dd-b210-4feb-bf13-3ce3cd008fec",
+      "name": "filtering titles"
+    },
+    {
+      "parameters": {
+        "url": "https://youtube-video-summarizer-gpt-ai.p.rapidapi.com/api/v1/get-transcript-v2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "video_id",
+              "value": "={{ $json.videoId }}"
+            },
+            {
+              "name": "platform",
+              "value": "youtube"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-host",
+              "value": "youtube-video-summarizer-gpt-ai.p.rapidapi.com"
+            },
+            {
+              "name": "x-rapidapi-key",
+              "value": "5e4db197b4mshf68f16ac6491fd8p138716jsn9b986e2ffc9b"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        -160
+      ],
+      "id": "55fb2a85-8d52-4694-9423-d5c6aefc9811",
+      "name": "Get Transcripts from video"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d481f692-7c13-43ce-8e18-99a159f3194d",
+              "name": "Video link",
+              "value": "={{ $json[' Video link'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        -160
+      ],
+      "id": "f6338695-97dd-4e5d-9167-ebd5df85d57f",
+      "name": "Extract link",
+      "notesInFlow": true,
+      "notes": "This will seprate a video link column For furthur parsing."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get full input JSON\nconst data = $input.item.json;\n\n// Function to recursively find `custom` array under `hi_auto`\nfunction findCustom(obj) {\n  if (obj && typeof obj === \"object\") {\n    if (obj.hi_auto?.custom && Array.isArray(obj.hi_auto.custom)) {\n      return obj.hi_auto.custom;\n    }\n\n    for (const key in obj) {\n      const result = findCustom(obj[key]);\n      if (result) return result;\n    }\n  }\n  return null;\n}\n\n// Try to locate the `custom` array\nconst customArray = findCustom(data);\n\n// If found, combine all `text` entries\nif (customArray && Array.isArray(customArray)) {\n  const fullTranscript = customArray.map(entry => entry.text).join(\" \");\n  return [{ json: { fullTranscript } }];\n} else {\n  return [{ json: { error: \"Could not find custom[] under hi_auto\" } }];\n}\n\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        -160
+      ],
+      "id": "8e37bb19-cfbc-4966-b623-fedd07bd3841",
+      "name": "Combine trancripts",
+      "notesInFlow": true,
+      "notes": "combine trancipts in one paragraph"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f73431bc-095a-4197-b6f2-96fce42e82c1",
+              "name": "data transcipts",
+              "value": "={{ $json.data.transcripts }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1320,
+        -160
+      ],
+      "id": "d3bd21c7-b804-4023-817a-8f6afb691d0b",
+      "name": "Extract transcripts",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.fullTranscript }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=YOU ARE AGENT : THE WORLD’S LEADING EXPERT IN YOUTUBE VIDEO DESCRIPTIONS & SEO META TAGS\nInternationally recognized for crafting high-converting, algorithm-optimized YouTube video descriptions, your job is to turn summarized transcripts or video content into descriptions that boost discoverability, increase CTR, and keep viewers engaged. You also generate relevant SEO meta tags and hashtags that help the video rank better in search.\n\n✅ INSTRUCTIONS\nUse a compelling hook in the first 1–2 lines — this is what appears above the fold and needs to grab attention immediately.\n\nSummarize the video content clearly and naturally in 3–6 sentences — keep it audience-friendly and informative.\n\nInclude CTA lines like “Subscribe,” “Watch next,” “Join the community,” etc.\n\nInclude 2 blocks at the end:\n\nSEO Meta Tags (comma-separated keywords)\n\nHashtags (in YouTube-friendly format)\n\n🧠 CHAIN OF THOUGHTS\nANALYZE THE VIDEO SUMMARY OR TRANSCRIPT\n\nUnderstand the topic, tone, and value for the viewer.\n\nIdentify keywords and content highlights.\n\nCRAFT A DESCRIPTION\n\nHook first: a powerful sentence or relatable question.\n\nOverview: what the viewer will learn or gain.\n\nContent breakdown: any notable moments or segments.\n\nEngagement prompts: ask for likes, subs, or comments.\n\nSEO OPTIMIZATION\n\nUse relevant, high-ranking keywords naturally.\n\nCreate a separate list of tags to improve search indexing.\n\nInclude niche-specific hashtags and trends.\n\nFORMAT FOR YOUTUBE\n\nMake sure the first 2 lines are click-worthy.\n\nUse line breaks to improve readability.\n\nPlace SEO tags at the end, not in the main paragraph.\n\n❌ WHAT NOT TO DO\nDon’t start with boring or vague intros like “In this video…”\n\nDon’t skip SEO tags, hashtags, or CTAs.\n\nDon’t stuff keywords unnaturally — keep it human-readable.\n\nDon’t write bulky, unstructured paragraphs.\n\nDon’t reuse the same description format every time — customize!\n\n💡 FEW-SHOT EXAMPLE\n🎥 Input Summary:\n\"A 10-minute video explaining how to use ChatGPT with Airtable and automate workflows using N8N. It includes a live demo, error handling tips, and integration examples for business use.\"\n\n📄 Output Description:\nWant to automate your business using ChatGPT? This video shows you EXACTLY how to do it — step-by-step! 💡\n\nIn this quick tutorial, you'll learn how to:\n\nConnect ChatGPT to Airtable\n\nAutomate workflows using N8N\n\nHandle errors like a pro\n\nUse real business case examples to scale your productivity\n\n📌 Whether you're a no-code beginner or a workflow wizard, this guide breaks it down in a simple, clear way. Watch till the end for advanced bonus tips!\n\n👍 Like, Share, and Subscribe for weekly AI and automation hacks.\n🔔 Turn on the bell to stay ahead of the game.\n\n🔍 SEO Tags:\nchatgpt automation, n8n tutorial, airtable workflow, ai business tools, openai automation, no code automations, chatgpt n8n integration\n\n#️⃣ Hashtags:\n#ChatGPT #Airtable #N8N #AutomationTutorial #NoCodeAI #WorkflowHacks\n\nWhatever the language of the transcription is I want you to give me the description in English only"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1760,
+        -160
+      ],
+      "id": "33c907a7-868a-4e31-8032-48527fb651cd",
+      "name": "creating descriptions"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.cleanedText }}\n\nYou are an expert YouTube strategist and title creator.\n\nBased on the video description above, your job is to generate **10 extremely viral, click-worthy YouTube video titles**.\n\n### Guidelines:\n- Each title should be under **100 characters**\n- Use **emojis** to boost engagement\n- Use **power words**, **urgency**, or **mystery**\n- Vary the format (how-to, list, question, shocking, benefit-focused, etc.)\n- Make them **feel human**, not AI-generated\n- Focus on getting a **high click-through rate (CTR)**\n\n\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2340,
+        -170
+      ],
+      "id": "36953de6-3a51-45c4-a39f-54cf768e70e0",
+      "name": "Creating viral titles"
+    },
+    {
+      "parameters": {
+        "sendTo": "lavishjaggi026@gmail.com",
+        "subject": "Your video material is ready",
+        "emailType": "text",
+        "message": "=Description -   {{ $('filter description').item.json.cleaned_text }}\n\nTitles -\n{{ $('filtering titles').item.json.cleaned_text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2980,
+        -320
+      ],
+      "id": "d8ed27b9-0fdd-487b-b661-fe28733e4dba",
+      "name": "send mail Description and titles",
+      "webhookId": "979f77c3-6ca7-4cff-a291-c113020a7a6e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FtX6rezU8m3wqtX4",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Extract link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code- This will seprate Video link and id": {
+      "main": [
+        [
+          {
+            "node": "Get Transcripts from video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "creating descriptions",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Creating viral titles",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filter description": {
+      "main": [
+        [
+          {
+            "node": "Creating viral titles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtering titles": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "send mail Description and titles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Transcripts from video": {
+      "main": [
+        [
+          {
+            "node": "Extract transcripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract link": {
+      "main": [
+        [
+          {
+            "node": "Code- This will seprate Video link and id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine trancripts": {
+      "main": [
+        [
+          {
+            "node": "creating descriptions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract transcripts": {
+      "main": [
+        [
+          {
+            "node": "Combine trancripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "creating descriptions": {
+      "main": [
+        [
+          {
+            "node": "filter description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creating viral titles": {
+      "main": [
+        [
+          {
+            "node": "filtering titles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "943b08ef-1458-4629-b1a2-1ec489d9a9d5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0c43e22d92b836bc966b62f26ecec74e816f6171137b78a7576518472d634cf4"
+  },
+  "id": "5qTV9l4HfheIbkPl",
+  "tags": []
+}
